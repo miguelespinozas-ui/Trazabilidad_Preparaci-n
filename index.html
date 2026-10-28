@@ -709,14 +709,16 @@ header{position:relative;top:auto}main{padding-top:18px}.tabs{grid-template-colu
 @media(max-width:650px){.tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:2px}.tab{font-size:12px;padding:12px 4px}.inline-grid{grid-template-columns:1fr}.form-actions{flex-direction:column}.form-actions>*{width:100%}header{padding:18px}.brand h1{font-size:22px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
  .machine-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
  @media(max-width:650px){.machine-stats{grid-template-columns:1fr}}
-</style></head><body><div class="shell"><header><div class="brand"><small>ARIS INDUSTRIAL · TEXTIL · HILANDERÍA</small><h1>Trazabilidad Partida–Máquina</h1><p>Registro de arranques mediante código de barras · Preparación</p></div><div class="head-actions"><span class="chip">MVP local · v0.3</span></div></header>
+</style></head><body><div class="shell"><header><div class="brand"><small>ARIS INDUSTRIAL · TEXTIL · HILANDERÍA</small><h1>Trazabilidad Partida–Máquina</h1><p>Registro de arranques mediante código de barras · Preparación</p></div><div class="head-actions"><span class="chip">MVP local · v0.4</span></div></header>
 <main><div class="notice" style="margin-bottom:14px"><strong>Versión de prueba:</strong> los datos se guardan únicamente en este navegador. No sincroniza información entre celulares ni modifica el planificador v0.26. Para usar cámara desde una página web se requiere HTTPS o localhost; abrir el archivo directamente puede impedir el acceso a la cámara.</div>
 <nav class="tabs" aria-label="Vistas"><button class="tab active" data-tab="register">Registrar partida</button><button class="tab" data-tab="machines">Estado de equipos</button><button class="tab" data-tab="history">Historial</button></nav>
 <section class="content active" id="register"><div class="panel form-shell"><h3>Registrar inicio de partida</h3><p class="help">Selecciona la máquina, escanea el código <b>Code 39</b> ubicado al pie de la hoja de ruta y confirma el registro. También puedes ingresar el código manualmente para probar.</p>
 <div class="inline-grid"><div class="field"><label for="area">Área</label><select id="area"></select></div><div class="field"><label for="machine">Máquina</label><select id="machine"></select></div></div>
 <div class="field" style="margin-top:14px"><label for="code">Número de partida</label><input id="code" type="text" inputmode="numeric" autocomplete="off" placeholder="Ej. 6000370" maxlength="40" /></div>
 <div class="form-actions" style="margin-top:12px"><button class="btn btn-machine-register" id="scanBtn" type="button">▣ Abrir cámara y escanear</button><button class="btn btn-light" id="stopScanBtn" type="button" style="display:none">Cerrar cámara</button></div>
-<div id="scannerWrap" class="scanner-wrap"><div id="scannerBox" class="scanner-box"></div><div class="scanner-status" id="scanStatus" role="status">Preparando lector…</div><div style="padding:0 12px 12px"><button class="btn btn-secondary btn-sm" id="switchReaderBtn" type="button">Cambiar lector de cámara</button></div></div>
+<div class="form-actions" style="margin-top:9px"><button class="btn btn-light" id="photoBtn" type="button">📷 Tomar foto del código</button><input id="photoInput" type="file" accept="image/*" capture="environment" style="display:none" /></div>
+<div id="photoStatus" class="small-info" role="status" style="margin-top:7px">Alternativa: toma una foto nítida del código completo. Se examinarán varias resoluciones y orientaciones.</div>
+<div id="photoReader" style="display:none"></div><div id="scannerWrap" class="scanner-wrap"><div id="scannerBox" class="scanner-box"></div><div class="scanner-status" id="scanStatus" role="status">Preparando lector…</div><div style="padding:0 12px 12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn btn-secondary btn-sm" id="switchReaderBtn" type="button">Cambiar lector de cámara</button><label for="zoomRange" style="font-size:12px">Zoom</label><input id="zoomRange" type="range" min="1" max="3" step="0.25" value="1" style="flex:1;min-width:100px"/><span id="zoomLabel">1×</span></div></div>
 <div class="field" style="margin-top:14px"><label for="user">Encargado</label><input id="user" type="text" autocomplete="name" placeholder="Nombre o código del encargado" maxlength="80" /></div>
 <div class="info-strip" id="currentInfo" style="margin-top:14px">Selecciona una máquina para consultar su última partida registrada.</div>
 <div class="form-actions" style="margin-top:14px"><button class="btn btn-green" type="button" id="startBtn">✓ Confirmar inicio de partida</button><button class="btn btn-light" type="button" id="finishBtn">Finalizar partida actual</button></div><div id="message" role="status" aria-live="polite"></div></div></section>
@@ -730,7 +732,7 @@ const KEY='aris_trazabilidad_partida_maquina_mvp_v01';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function readRecords(){try{const v=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(v)?v:[]}catch(e){return []}}
-let records=readRecords(); let scanner=null,stream=null,scanTimer=null,scanning=false,scanBusy=false,readerPreference='html5';
+let records=readRecords(); let scanner=null,stream=null,scanTimer=null,scanning=false,scanBusy=false,readerPreference='html5';let currentZoom=1;
 const id=()=>window.crypto?.randomUUID?.()||'rec-'+Date.now()+'-'+Math.random().toString(16).slice(2);
 const fmt=d=>new Intl.DateTimeFormat('es-PE',{dateStyle:'short',timeStyle:'medium',hour12:false}).format(new Date(d));
 const mins=(start,end=Date.now())=>Math.max(0,Math.round((new Date(end).getTime()-new Date(start).getTime())/60000));
@@ -750,10 +752,48 @@ function renderAll(){refreshCurrent();renderMachines();renderHistory()}
 function download(name,data,mime){const blob=new Blob([data],{type:mime});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 function exportCsv(){const fields=['Partida','Área','Máquina','Inicio','Fin','Duración (min)','Estado','Encargado','Motivo cierre','Encargado cierre'];const quote=v=>'"'+String(v??'').replace(/"/g,'""')+'"';const rows=filteredHistory().map(r=>[r.partida,r.area,r.machine,r.start,r.end||'',mins(r.start,r.end||Date.now()),r.end?'Cerrado':'Activo',r.user,r.endReason,r.closeUser]);download('trazabilidad_partidas_'+new Date().toISOString().slice(0,10)+'.csv','﻿'+[fields,...rows].map(row=>row.map(quote).join(';')).join('\r\n'),'text/csv;charset=utf-8')}
 async function stopScanner(){scanning=false;if(scanTimer){clearTimeout(scanTimer);scanTimer=null}if(scanner){try{await scanner.stop()}catch(e){}try{scanner.clear()}catch(e){}scanner=null}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('scannerBox').replaceChildren();$('scannerWrap').classList.remove('show');$('stopScanBtn').style.display='none';$('scanBtn').style.display='inline-flex';scanBusy=false}
-function onDecoded(value){if(!scanning||scanBusy)return;const v=String(value||'').trim();if(!v)return;scanBusy=true;$('code').value=v;$('scanStatus').textContent='Leído: '+v;stopScanner().then(()=>{setMessage('Código leído correctamente: '+v+'. Verifica la máquina y confirma el inicio.');$('code').focus()})}
+function onDecoded(value,fromPhoto=false){if((!scanning&&!fromPhoto)||scanBusy)return;const v=String(value||'').trim();if(!v)return;scanBusy=true;$('code').value=v;$('scanStatus').textContent='Leído: '+v;stopScanner().then(()=>{setMessage('Código leído correctamente: '+v+'. Verifica la máquina y confirma el inicio.');$('code').focus()})}
 async function loadHtml5(){if(window.Html5Qrcode)return true;return new Promise(resolve=>{const script=document.createElement('script');script.src='https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';script.onload=()=>resolve(!!window.Html5Qrcode);script.onerror=()=>resolve(false);document.head.append(script)})}
-async function nativeScan(){if(!('BarcodeDetector'in window))throw Error('Sin lector nativo');let supported=await BarcodeDetector.getSupportedFormats();if(!supported.includes('code_39'))throw Error('Code 39 no soportado por este navegador');stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});const video=document.createElement('video');video.autoplay=true;video.muted=true;video.playsInline=true;video.srcObject=stream;$('scannerBox').append(video);await video.play();const detector=new BarcodeDetector({formats:['code_39']});$('scanStatus').textContent='Apunta al código de barras Code 39 de la hoja de ruta.';const loop=async()=>{if(!scanning||!stream)return;try{const codes=await detector.detect(video);if(codes.length){onDecoded(codes[0].rawValue);return}}catch(e){}scanTimer=setTimeout(loop,160)};loop()}
-async function fallbackScan(){if(!await loadHtml5())throw Error('No fue posible cargar el lector. Comprueba tu conexión a internet.');scanner=new Html5Qrcode('scannerBox',{formatsToSupport:[Html5QrcodeSupportedFormats.CODE_39],verbose:false});await scanner.start({facingMode:'environment'},{fps:15,aspectRatio:1.333334,disableFlip:true,videoConstraints:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}},decoded=>onDecoded(decoded),()=>{});$('scanStatus').textContent='Lector Code 39 activo. Coloca TODO el código dentro de la imagen, en horizontal, con buena luz y sin acercarte demasiado.'}
+async function nativeScan(){if(!('BarcodeDetector'in window))throw Error('Sin lector nativo');let supported=await BarcodeDetector.getSupportedFormats();if(!supported.includes('code_39'))throw Error('Code 39 no soportado por este navegador');stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});const video=document.createElement('video');video.autoplay=true;video.muted=true;video.playsInline=true;video.srcObject=stream;$('scannerBox').append(video);await video.play();await applyZoom();const detector=new BarcodeDetector({formats:['code_39']});$('scanStatus').textContent='Apunta al código de barras Code 39 de la hoja de ruta.';const loop=async()=>{if(!scanning||!stream)return;try{const codes=await detector.detect(video);if(codes.length){onDecoded(codes[0].rawValue);return}}catch(e){}scanTimer=setTimeout(loop,160)};loop()}
+async function fallbackScan(){if(!await loadHtml5())throw Error('No fue posible cargar el lector. Comprueba tu conexión a internet.');scanner=new Html5Qrcode('scannerBox',{formatsToSupport:[Html5QrcodeSupportedFormats.CODE_39],verbose:false});await scanner.start({facingMode:'environment'},{fps:15,disableFlip:true,videoConstraints:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}},decoded=>onDecoded(decoded),()=>{});$('scanStatus').textContent='Lector Code 39 activo. Aleja o acerca el celular hasta que TODAS las barras estén nítidas. Prueba el zoom o la opción Tomar foto.';await applyZoom()}
+async function applyZoom(){
+ const zoom=Number($('zoomRange').value)||1;currentZoom=zoom;$('zoomLabel').textContent=zoom+'×';
+ const video=$('scannerBox').querySelector('video');const track=stream?.getVideoTracks()[0]||video?.srcObject?.getVideoTracks?.()[0];
+ if(track){try{const caps=track.getCapabilities?.();if(caps?.zoom){const z=Math.min(caps.zoom.max,Math.max(caps.zoom.min,zoom));await track.applyConstraints({advanced:[{zoom:z}]});if(video)video.style.transform='none';return}}catch(e){}}
+ if(video){video.style.transform=`scale(${zoom})`;video.style.transformOrigin='center center'}
+}
+$('zoomRange').addEventListener('input',applyZoom);
+// A camera photo allows decoding the full-resolution still image rather than a preview frame.
+$('photoBtn').addEventListener('click',()=>{$('photoInput').value='';$('photoInput').click()});
+$('photoInput').addEventListener('change',async e=>{
+ const file=e.target.files?.[0];if(!file)return;
+ const status=$('photoStatus');status.textContent='Procesando imagen: probando varias escalas y orientaciones…';
+ let reader=null;let bitmap=null;
+ try{
+  if(!await loadHtml5())throw Error('No se pudo cargar el lector de imágenes; revisa internet.');
+  // Decode full-size input and generated resized/rotated copies.
+  bitmap=await createImageBitmap(file);
+  const attempts=[];
+  const maxSide=Math.max(bitmap.width,bitmap.height);
+  for(const target of [maxSide,2400,1600,1000]){
+   const factor=Math.min(1,target/maxSide),w=Math.max(1,Math.round(bitmap.width*factor)),h=Math.max(1,Math.round(bitmap.height*factor));
+   for(const degrees of [0,90,270])attempts.push({w,h,degrees});
+  }
+  for(const a of attempts){
+   const swap=a.degrees!==0;const canvas=document.createElement('canvas');canvas.width=swap?a.h:a.w;canvas.height=swap?a.w:a.h;
+   const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.translate(canvas.width/2,canvas.height/2);ctx.rotate(a.degrees*Math.PI/180);ctx.drawImage(bitmap,-a.w/2,-a.h/2,a.w,a.h);
+   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+   if(!blob)continue;
+   reader=new Html5Qrcode('photoReader',{formatsToSupport:[Html5QrcodeSupportedFormats.CODE_39],verbose:false});
+   try{const decoded=await reader.scanFile(new File([blob],'codigo.png',{type:'image/png'}),false);
+    status.textContent='Código leído de la foto: '+decoded;scanBusy=false;onDecoded(decoded,true);return;
+   }catch(err){}finally{try{reader.clear()}catch(err){}reader=null}
+  }
+  status.textContent='No se reconoció el código de esta foto. Acércate para enfocar, conserva todas las barras y deja margen blanco a ambos lados.';
+ }catch(err){status.textContent='No se pudo procesar la foto: '+(err?.message||err)}
+ finally{bitmap?.close?.()}
+});
+
 async function startScanner(){
  if(scanning)return;
  if(!navigator.mediaDevices?.getUserMedia){setMessage('La cámara requiere abrir la aplicación mediante HTTPS o localhost. Mientras tanto puedes ingresar el número manualmente.',true);return}
