@@ -1,0 +1,759 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#0f3d37"><title>ARIS · Trazabilidad Partida–Máquina · MVP</title>
+<style>
+  :root{
+    --bg:#eef3f7;
+    --panel:#ffffff;
+    --panel-soft:#f8fbfc;
+    --ink:#13242d;
+    --muted:#667782;
+    --line:#dbe4e9;
+    --line-strong:#cbd7dd;
+    --brand:#21a894;
+    --brand-strong:#0f8f7e;
+    --brand-dark:#0f3d37;
+    --brand-deep:#07342f;
+    --brand-soft:#e9f8f5;
+    --danger:#e14b55;
+    --danger-soft:#fff0f2;
+    --ok:#0b9d70;
+    --ok-soft:#dff7ee;
+    --warning:#d07a00;
+    --warning-soft:#fff6df;
+    --shadow:0 8px 24px rgba(22,50,58,.08);
+    --shadow-sm:0 4px 14px rgba(22,50,58,.06);
+    --radius:14px;
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    font-family:Inter,Segoe UI,Arial,sans-serif;
+    background:
+      radial-gradient(circle at top right, rgba(33,168,148,.06), transparent 25%),
+      var(--bg);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  button,input,select,textarea{font:inherit}
+  button{cursor:pointer}
+  .shell{min-height:100vh}
+
+  header{
+    max-width:1380px;
+    margin:20px auto 0;
+    background:linear-gradient(135deg,var(--brand-deep) 0%, var(--brand-dark) 42%, var(--brand) 100%);
+    color:#fff;
+    padding:22px 24px;
+    display:flex;
+    justify-content:space-between;
+    gap:20px;
+    align-items:center;
+    border-radius:16px;
+    box-shadow:0 12px 30px rgba(6,58,52,.18);
+    position:sticky;
+    top:12px;
+    z-index:10;
+  }
+  .brand small{
+    display:block;
+    opacity:.82;
+    font-weight:800;
+    letter-spacing:.08em;
+    font-size:12px
+  }
+  .brand h1{
+    margin:5px 0 4px;
+    font-size:26px;
+    line-height:1.1;
+    letter-spacing:-.02em
+  }
+  .brand p{
+    margin:0;
+    opacity:.9;
+    font-size:14px
+  }
+  .head-actions{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap
+  }
+
+  .btn{
+    border:1px solid transparent;
+    border-radius:9px;
+    padding:10px 15px;
+    font-weight:800;
+    transition:.18s ease;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+  }
+  .btn:hover{transform:translateY(-1px)}
+  .btn-primary{
+    background:#fff;
+    color:#17312f;
+    box-shadow:0 4px 12px rgba(0,0,0,.08)
+  }
+  .btn-secondary{
+    background:rgba(255,255,255,.08);
+    color:#fff;
+    border-color:rgba(255,255,255,.32)
+  }
+  .btn-secondary:hover{background:rgba(255,255,255,.14)}
+  .btn-green{background:var(--brand);color:white}
+  .btn-green:hover{background:var(--brand-strong)}
+  .btn-danger{background:var(--danger);color:white}
+  .btn-light{
+    background:#fff;
+    border-color:var(--line-strong);
+    color:var(--ink)
+  }
+  .btn-light:hover{background:#f8fbfc}
+  .btn-sm{padding:8px 11px;font-size:13px}
+  .btn-machine-register{
+    background:var(--brand-dark);
+    color:#fff;
+    border-color:var(--brand-dark);
+    box-shadow:0 3px 8px rgba(15,61,55,.15)
+  }
+  .btn-machine-register:hover{background:#15544b}
+
+  main{
+    max-width:1380px;
+    margin:0 auto;
+    padding:18px 0 36px
+  }
+
+  .tabs{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:5px;
+    margin-bottom:16px;
+    box-shadow:var(--shadow-sm)
+  }
+  .tab{
+    border:0;
+    background:transparent;
+    padding:12px 16px;
+    border-radius:8px;
+    color:#60707c;
+    font-weight:700;
+    transition:.18s ease
+  }
+  .tab:hover{background:#f5f9fa;color:#31434d}
+  .tab.active{
+    background:linear-gradient(135deg,var(--brand),#2ab5a2);
+    color:#fff;
+    font-weight:900;
+    box-shadow:0 3px 10px rgba(33,168,148,.18)
+  }
+
+  .toolbar,.card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:12px
+  }
+  .toolbar{
+    padding:14px 16px;
+    margin-bottom:14px;
+    display:flex;
+    gap:12px;
+    align-items:end;
+    flex-wrap:wrap;
+    box-shadow:var(--shadow-sm)
+  }
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    min-width:160px
+  }
+  .field label{
+    font-size:11px;
+    font-weight:900;
+    color:#61727d;
+    text-transform:uppercase;
+    letter-spacing:.055em
+  }
+  input,select,textarea{
+    border:1px solid var(--line-strong);
+    border-radius:8px;
+    padding:10px 11px;
+    background:#fff;
+    color:var(--ink);
+    transition:.15s ease
+  }
+  input:hover,select:hover,textarea:hover{border-color:#b9c8cf}
+  input:focus,select:focus,textarea:focus{
+    outline:3px solid rgba(33,168,148,.11);
+    border-color:var(--brand)
+  }
+  textarea{resize:vertical}
+
+  .content{display:none}
+  .content.active{display:block}
+
+  .stats{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+    margin-bottom:14px
+  }
+  .stat{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:15px 16px;
+    box-shadow:var(--shadow-sm);
+    position:relative;
+    overflow:hidden
+  }
+  .stat::before{
+    content:"";
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:4px;
+    background:#d8e5e3
+  }
+  .stat:nth-child(1)::before{background:#ef6a74}
+  .stat:nth-child(2)::before{background:#1dad7d}
+  .stat:nth-child(3)::before{background:#3c92d9}
+  .stat:nth-child(4)::before{background:#e88a1f}
+  .stat .k{
+    font-size:11px;
+    color:#647687;
+    text-transform:uppercase;
+    font-weight:900;
+    letter-spacing:.04em
+  }
+  .stat .v{
+    font-size:27px;
+    font-weight:950;
+    margin:5px 0 3px;
+    letter-spacing:-.03em
+  }
+  .stat .s{font-size:11px;color:#77858f}
+  .v.red{color:#e32437}
+  .v.green{color:#0a9768}
+  .v.blue{color:#167fd1}
+  .v.orange{color:#d96b00}
+
+  .dash-grid{
+    display:grid;
+    grid-template-columns:1.03fr 1fr;
+    gap:14px
+  }
+  .panel{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:15px;
+    box-shadow:var(--shadow-sm)
+  }
+  .panel h3{
+    margin:0 0 11px;
+    font-size:16px;
+    letter-spacing:-.01em
+  }
+
+  .stop-list{display:flex;flex-direction:column;gap:8px}
+  .stop-row{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    align-items:center;
+    background:linear-gradient(90deg,#fff7f8,#fff);
+    border:1px solid #ffd5d9;
+    border-left:4px solid #ef6a74;
+    border-radius:9px;
+    padding:10px 11px
+  }
+  .stop-row strong{min-width:130px}
+  .stop-meta{font-size:12px;color:#6e7b84;flex:1}
+
+  .top-list{display:flex;flex-direction:column;gap:9px}
+  .top-item{
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:11px 12px;
+    background:linear-gradient(180deg,#fff,#fbfdfd)
+  }
+  .top-head{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:center
+  }
+  .top-name{font-weight:950}
+  .top-metrics{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+    margin-top:8px;
+    font-size:11px;
+    color:#75838d
+  }
+  .top-metrics b{
+    display:block;
+    font-size:14px;
+    color:#21343d;
+    margin-top:2px
+  }
+  .motives{
+    font-size:11px;
+    color:#687887;
+    margin-top:8px;
+    padding-top:7px;
+    border-top:1px solid #edf2f4
+  }
+
+  .area-section{margin-bottom:20px}
+  .area-title{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin:4px 0 10px
+  }
+  .area-title h3{
+    margin:0;
+    font-size:18px;
+    letter-spacing:-.015em
+  }
+  .badge{
+    font-size:11px;
+    border-radius:999px;
+    padding:4px 8px;
+    background:var(--brand-soft);
+    color:#137466;
+    font-weight:900
+  }
+
+  .machine-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+    gap:12px
+  }
+  .machine{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:15px;
+    box-shadow:var(--shadow-sm);
+    position:relative;
+    overflow:hidden;
+    transition:.18s ease
+  }
+  .machine::before{
+    content:"";
+    position:absolute;
+    left:0;top:0;bottom:0;
+    width:5px;
+    background:var(--brand)
+  }
+  .machine:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 22px rgba(22,50,58,.10)
+  }
+  .machine.open{
+    border-color:#ffd0d4;
+    background:#fffafa
+  }
+  .machine.open::before{background:#ed6672}
+  .machine-head{
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    align-items:flex-start;
+    padding-left:3px
+  }
+  .machine-name{
+    font-size:16px;
+    font-weight:950;
+    letter-spacing:-.01em
+  }
+  .status{
+    font-size:11px;
+    padding:5px 9px;
+    border-radius:999px;
+    font-weight:900;
+    white-space:nowrap
+  }
+  .status.ok{background:var(--ok-soft);color:var(--ok)}
+  .status.stop{background:#ffe4e7;color:#c91f33}
+  .machine-info{
+    min-height:64px;
+    margin:12px 0 13px;
+    color:#667782;
+    font-size:12px;
+    line-height:1.5;
+    padding-left:3px
+  }
+  .machine-info strong{color:var(--ink)}
+  .machine-actions{
+    display:flex;
+    justify-content:flex-start;
+    padding-left:3px
+  }
+
+  .table-wrap{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:12px;
+    overflow:auto;
+    box-shadow:var(--shadow-sm)
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:12px;
+    min-width:1180px
+  }
+  th{
+    position:sticky;
+    top:0;
+    background:#f7fafb;
+    text-transform:uppercase;
+    font-size:10px;
+    letter-spacing:.045em;
+    color:#62717d;
+    text-align:left;
+    padding:12px 10px;
+    border-bottom:1px solid var(--line)
+  }
+  td{
+    padding:11px 10px;
+    border-bottom:1px solid #edf1f3;
+    vertical-align:middle
+  }
+  tbody tr:hover{background:#f9fcfc}
+  tr.open-row{background:#fff8f8}
+  .state-pill{
+    padding:4px 8px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:900
+  }
+  .state-pill.open{background:#ffe0e4;color:#cb2035}
+  .state-pill.closed{background:#dff7ea;color:#14805f}
+  .action-link{
+    border:1px solid var(--line-strong);
+    background:white;
+    border-radius:7px;
+    padding:6px 9px;
+    margin-right:5px;
+    font-weight:700
+  }
+  .delete-link{
+    border:0;
+    background:transparent;
+    color:#e32533;
+    padding:6px;
+    font-weight:700
+  }
+
+  .modal-backdrop{
+    position:fixed;
+    inset:0;
+    background:rgba(6,25,30,.60);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:50;
+    backdrop-filter:blur(3px)
+  }
+  .modal-backdrop.show{display:flex}
+  .modal{
+    width:min(780px,100%);
+    max-height:92vh;
+    overflow:auto;
+    background:#fff;
+    border-radius:16px;
+    box-shadow:0 30px 90px rgba(0,0,0,.30);
+    animation:modalIn .18s ease
+  }
+  @keyframes modalIn{
+    from{opacity:0;transform:translateY(8px) scale(.99)}
+    to{opacity:1;transform:none}
+  }
+  .modal-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:17px 19px;
+    border-bottom:1px solid var(--line);
+    background:#fbfdfd
+  }
+  .modal-head h2{
+    margin:0;
+    font-size:20px;
+    letter-spacing:-.02em
+  }
+  .close-x{
+    border:0;
+    background:transparent;
+    font-size:27px;
+    color:#6b7782;
+    line-height:1
+  }
+  .modal-body{padding:18px}
+  .modal-foot{
+    padding:14px 18px;
+    border-top:1px solid var(--line);
+    display:flex;
+    justify-content:flex-end;
+    gap:9px;
+    background:#fbfdfd
+  }
+  .form-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:13px
+  }
+  .span-2{grid-column:1/-1}
+
+  .machine-select{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(145px,1fr));
+    gap:8px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:10px;
+    max-height:280px;
+    overflow:auto;
+    background:#f9fbfc
+  }
+  .pick{
+    border:1px solid #d7e0e5;
+    background:#fff;
+    border-radius:8px;
+    padding:9px;
+    text-align:left;
+    transition:.15s ease
+  }
+  .pick:hover:not(:disabled){
+    border-color:#9ccdc4;
+    background:#f5fbfa
+  }
+  .pick.selected{
+    border-color:var(--brand);
+    background:#eaf8f5;
+    color:#0d685d;
+    font-weight:900;
+    box-shadow:inset 0 0 0 1px rgba(33,168,148,.10)
+  }
+  .pick:disabled{opacity:.55;cursor:not-allowed}
+  .small-muted{font-size:11px;color:#72808b}
+  .warning{
+    display:none;
+    margin-top:6px;
+    color:#a85d00;
+    background:var(--warning-soft);
+    border:1px solid #ffd79a;
+    padding:8px;
+    border-radius:8px;
+    font-size:12px
+  }
+  .warning.show{display:block}
+  .empty{
+    padding:24px;
+    text-align:center;
+    color:#7b8992
+  }
+  .setup-note{
+    background:#eef8f6;
+    border:1px solid #cde9e3;
+    padding:11px;
+    border-radius:9px;
+    font-size:12px;
+    color:#2a5a53;
+    margin-bottom:12px
+  }
+
+  @media(max-width:1440px){
+    header,main{margin-left:18px;margin-right:18px}
+  }
+  @media(max-width:900px){
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .dash-grid{grid-template-columns:1fr}
+    .form-grid{grid-template-columns:1fr}
+    .span-2{grid-column:auto}
+  }
+  @media(max-width:650px){
+    header{
+      align-items:flex-start;
+      flex-direction:column;
+      position:static;
+      margin-top:10px
+    }
+    .head-actions{width:100%}
+    .head-actions .btn{flex:1}
+    .stats{grid-template-columns:1fr 1fr}
+    .tabs{grid-template-columns:1fr}
+    .toolbar{align-items:stretch}
+    .field{width:100%}
+    main{padding-top:12px}
+  }
+
+  .mode-choice-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:12px
+  }
+  .mode-choice{
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:12px;
+    padding:18px;
+    text-align:left;
+    transition:.18s ease;
+    box-shadow:var(--shadow-sm)
+  }
+  .mode-choice:hover{
+    transform:translateY(-2px);
+    border-color:#9dcfc7;
+    box-shadow:0 10px 24px rgba(22,50,58,.10)
+  }
+  .mode-choice .mode-title{
+    display:block;
+    font-weight:950;
+    font-size:16px;
+    margin-bottom:6px;
+    color:var(--ink)
+  }
+  .mode-choice .mode-desc{
+    display:block;
+    font-size:12px;
+    line-height:1.45;
+    color:var(--muted)
+  }
+  .mode-choice.primary{
+    border-left:5px solid var(--brand)
+  }
+  .mode-choice.alt{
+    border-left:5px solid #3b82c4
+  }
+  .hours-preview{
+    margin-top:7px;
+    padding:10px 12px;
+    border-radius:9px;
+    background:#eef8f6;
+    border:1px solid #cde9e3;
+    color:#235b53;
+    font-size:13px;
+    font-weight:800
+  }
+  .hours-preview.invalid{
+    background:#fff2f3;
+    border-color:#ffd0d4;
+    color:#b72a39
+  }
+  .synthetic-note{
+    margin-top:8px;
+    font-size:11px;
+    color:#6f7f88;
+    line-height:1.45
+  }
+  @media(max-width:650px){
+    .mode-choice-grid{grid-template-columns:1fr}
+  }
+
+
+  .date-filter-extra{
+    display:none;
+    gap:8px;
+    align-items:end;
+  }
+  .date-filter-extra.show{display:flex}
+  .filtered-total{
+    min-width:185px;
+    padding:10px 14px;
+    border:1px solid #cde9e3;
+    border-radius:10px;
+    background:linear-gradient(180deg,#f2fbf8,#eaf8f5);
+    box-shadow:var(--shadow-sm);
+  }
+  .filtered-total .label{
+    display:block;
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    color:#5f756f;
+    margin-bottom:2px;
+  }
+  .filtered-total .value{
+    display:block;
+    font-size:18px;
+    font-weight:950;
+    color:#0f7769;
+    line-height:1.1;
+  }
+  .filtered-total .sub{
+    display:block;
+    font-size:10px;
+    color:#72817d;
+    margin-top:3px;
+  }
+
+
+/* Extensión de trazabilidad: conserva la identidad de Control de Paradas v9 */
+header{position:relative;top:auto}main{padding-top:18px}.tabs{grid-template-columns:repeat(3,minmax(0,1fr))}
+.form-shell{max-width:920px;margin:auto}.big-number{font-size:26px;font-weight:950;letter-spacing:.03em}.small-info{color:var(--muted);font-size:12px;line-height:1.5}.help{font-size:13px;line-height:1.55;color:#465d66}.grow{flex:1}.form-actions{display:flex;gap:10px;flex-wrap:wrap}.form-actions>*{flex:1}.scanner-wrap{margin-top:14px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#071d20;color:#fff;display:none}.scanner-wrap.show{display:block}.scanner-box{width:100%;min-height:250px;position:relative}.scanner-box video{width:100%;max-height:360px;object-fit:cover;display:block}.scanner-box video::-webkit-media-controls{display:none}.scanner-status{padding:12px;font-size:12px}.chip{display:inline-block;background:#e9f8f5;color:#0f7769;border-radius:99px;font-weight:800;padding:4px 8px;font-size:11px}.info-strip{padding:12px;border-radius:10px;background:#eef8f6;border:1px solid #cde9e3}.info-strip.warn{background:#fff6df;border-color:#ffd79a}.record-card{border:1px solid var(--line);border-radius:12px;padding:14px;background:white}.machine.live::before{background:var(--ok)}.machine.empty::before{background:#adbdc7}.machine-info{min-height:85px}.inline-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.inline-grid .field{min-width:0}.history-table{min-width:900px}.positive{color:var(--ok);font-weight:900}.notice{background:#fff6df;border:1px solid #f0d69d;border-radius:10px;padding:10px 12px;font-size:12px;color:#714b04}.message{margin-top:12px;padding:12px;border-radius:9px;background:#eef8f6;color:#126457;border:1px solid #bde4d8;font-size:13px}.message.error{background:#fff0f2;color:#b72a39;border-color:#f6c3ca}.kpi{font-size:26px;font-weight:950}.empty-state{padding:26px;text-align:center;color:var(--muted)}
+@media(max-width:650px){.tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:2px}.tab{font-size:12px;padding:12px 4px}.inline-grid{grid-template-columns:1fr}.form-actions{flex-direction:column}.form-actions>*{width:100%}header{padding:18px}.brand h1{font-size:22px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style></head><body><div class="shell"><header><div class="brand"><small>ARIS INDUSTRIAL · TEXTIL · HILANDERÍA</small><h1>Trazabilidad Partida–Máquina</h1><p>Registro de arranques mediante código de barras · Preparación</p></div><div class="head-actions"><span class="chip">MVP local · v0.1</span></div></header>
+<main><div class="notice" style="margin-bottom:14px"><strong>Versión de prueba:</strong> los datos se guardan únicamente en este navegador. No sincroniza información entre celulares ni modifica el planificador v0.26. Para usar cámara desde una página web se requiere HTTPS o localhost; abrir el archivo directamente puede impedir el acceso a la cámara.</div>
+<nav class="tabs" aria-label="Vistas"><button class="tab active" data-tab="register">Registrar partida</button><button class="tab" data-tab="machines">Estado de equipos</button><button class="tab" data-tab="history">Historial</button></nav>
+<section class="content active" id="register"><div class="panel form-shell"><h3>Registrar inicio de partida</h3><p class="help">Selecciona la máquina, escanea el código <b>Code 39</b> ubicado al pie de la hoja de ruta y confirma el registro. También puedes ingresar el código manualmente para probar.</p>
+<div class="inline-grid"><div class="field"><label for="area">Área</label><select id="area"></select></div><div class="field"><label for="machine">Máquina</label><select id="machine"></select></div></div>
+<div class="field" style="margin-top:14px"><label for="code">Número de partida</label><input id="code" type="text" inputmode="numeric" autocomplete="off" placeholder="Ej. 6000370" maxlength="40" /></div>
+<div class="form-actions" style="margin-top:12px"><button class="btn btn-machine-register" id="scanBtn" type="button">▣ Abrir cámara y escanear</button><button class="btn btn-light" id="stopScanBtn" type="button" style="display:none">Cerrar cámara</button></div>
+<div id="scannerWrap" class="scanner-wrap"><div id="scannerBox" class="scanner-box"></div><div class="scanner-status" id="scanStatus" role="status">Preparando lector…</div></div>
+<div class="field" style="margin-top:14px"><label for="user">Encargado</label><input id="user" type="text" autocomplete="name" placeholder="Nombre o código del encargado" maxlength="80" /></div>
+<div class="info-strip" id="currentInfo" style="margin-top:14px">Selecciona una máquina para consultar su última partida registrada.</div>
+<div class="form-actions" style="margin-top:14px"><button class="btn btn-green" type="button" id="startBtn">✓ Confirmar inicio de partida</button><button class="btn btn-light" type="button" id="finishBtn">Finalizar partida actual</button></div><div id="message" role="status" aria-live="polite"></div></div></section>
+<section class="content" id="machines"><div class="toolbar"><div class="field"><label for="machineArea">Área</label><select id="machineArea"></select></div><div class="field"><label for="machineSearch">Buscar máquina o partida</label><input id="machineSearch" placeholder="Ej. 6000370" /></div></div><div class="stats"><div class="stat"><div class="k">Máquinas totales</div><div class="v blue" id="statTotal">0</div><div class="s">En el filtro</div></div><div class="stat"><div class="k">Con registro activo</div><div class="v green" id="statActive">0</div><div class="s">Partida asignada</div></div><div class="stat"><div class="k">Sin registro activo</div><div class="v orange" id="statEmpty">0</div><div class="s">No significa máquina libre</div></div><div class="stat"><div class="k">Partidas distintas</div><div class="v blue" id="statParts">0</div><div class="s">En máquinas filtradas</div></div></div><div id="machineSections"></div></section>
+<section class="content" id="history"><div class="toolbar"><div class="field"><label for="histSearch">Buscar partida / máquina / encargado</label><input id="histSearch" placeholder="Buscar…" /></div><div class="field"><label for="histArea">Área</label><select id="histArea"></select></div><div class="field"><label for="histState">Estado</label><select id="histState"><option value="all">Todos</option><option value="active">Activos</option><option value="closed">Cerrados</option></select></div><div class="field"><label for="histDate">Fecha de inicio</label><input id="histDate" type="date" /></div><button class="btn btn-light btn-sm" type="button" id="clearFilters">Limpiar filtros</button><button class="btn btn-light btn-sm" type="button" id="csvBtn">⇩ Exportar CSV</button><button class="btn btn-light btn-sm" type="button" id="jsonBtn">⇩ Respaldo JSON</button></div><div class="table-wrap"><table class="history-table"><thead><tr><th>Partida</th><th>Área</th><th>Máquina</th><th>Inicio</th><th>Fin</th><th>Duración</th><th>Estado</th><th>Encargado</th><th>Motivo cierre</th></tr></thead><tbody id="histBody"></tbody></table></div><p class="small-info" style="margin-top:10px">El tiempo registrado es tiempo entre eventos, no tiempo efectivo de producción. Los cambios de partida cierran automáticamente la asignación anterior de la misma máquina.</p></section>
+</main></div>
+<script>
+'use strict';
+const MACHINES=[{name:'Mezcladora 1',area:'Mezclado'},{name:'Mezcladora 2',area:'Mezclado'},{name:'Mezcladora 3',area:'Mezclado'},{name:'Ensimadora',area:'Mezclado'},{name:'Peinadora 1',area:'Peinado'},{name:'Peinadora 2',area:'Peinado'},{name:'Peinadora 3',area:'Peinado'},{name:'Peinadora 4',area:'Peinado'},{name:'Peinadora 5',area:'Peinado'},{name:'Peinadora 6',area:'Peinado'},{name:'Peinadora 7',area:'Peinado'},{name:'Vaciatacho',area:'Preparación'},{name:'Terminadora',area:'Preparación'},{name:'Gill Paso 1',area:'Preparación'},{name:'Gill Paso 2',area:'Preparación'},{name:'Gill Paso 3',area:'Preparación'},{name:'Gill Paso 4',area:'Preparación'},{name:'Finisor Gaudino',area:'Preparación'},{name:'Finisor 2',area:'Preparación'}];
+const KEY='aris_trazabilidad_partida_maquina_mvp_v01';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function readRecords(){try{const v=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(v)?v:[]}catch(e){return []}}
+let records=readRecords(); let scanner=null,stream=null,scanTimer=null,scanning=false,scanBusy=false;
+const id=()=>window.crypto?.randomUUID?.()||'rec-'+Date.now()+'-'+Math.random().toString(16).slice(2);
+const fmt=d=>new Intl.DateTimeFormat('es-PE',{dateStyle:'short',timeStyle:'medium',hour12:false}).format(new Date(d));
+const mins=(start,end=Date.now())=>Math.max(0,Math.round((new Date(end).getTime()-new Date(start).getTime())/60000));
+const duration=m=>Math.floor(m/60)+'h '+(m%60)+'m';
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(records));return true}catch(e){setMessage('No se pudo guardar en este navegador. Comprueba el almacenamiento disponible.',true);return false}}
+function active(machine){return records.find(r=>r.machine===machine && r.end===null)}
+function areasOptions(all=false){return (all?['Todas','Mezclado','Peinado','Preparación']:['Mezclado','Peinado','Preparación']).map(a=>`<option value="${a}">${a}</option>`).join('')}
+function setMessage(s,error=false){$('message').innerHTML=s?`<div class="message ${error?'error':''}">${esc(s)}</div>`:''}
+function fillMachines(){const area=$('area').value,old=$('machine').value;const ms=MACHINES.filter(m=>m.area===area);$('machine').innerHTML=ms.map(m=>`<option value="${esc(m.name)}">${esc(m.name)}</option>`).join('');if(ms.some(m=>m.name===old))$('machine').value=old;refreshCurrent()}
+function refreshCurrent(){const machine=$('machine').value,rec=active(machine);$('currentInfo').classList.toggle('warn',!!rec);$('currentInfo').innerHTML=rec?`<b>${esc(machine)}</b> tiene registrada la partida <b>${esc(rec.partida)}</b> desde ${esc(fmt(rec.start))} (${esc(duration(mins(rec.start)))}).<br><span class="small-info">Una nueva partida cerrará este registro. Si se vuelve a escanear la misma partida, no se creará un duplicado.</span>`:`<b>${esc(machine)}</b>: sin partida activa registrada en esta aplicación. No implica que esté físicamente libre.`;}
+function startPart(){const partida=$('code').value.trim().toUpperCase(),machine=$('machine').value,user=$('user').value.trim();if(!/^[A-Z0-9-]{1,40}$/.test(partida)){setMessage('Ingresa o escanea un código de partida válido (letras, números o guiones).',true);return}if(!machine||!user){setMessage('Selecciona una máquina e identifica al encargado.',true);return}const prev=active(machine);if(prev&&prev.partida===partida){setMessage(`La partida ${partida} ya está activa en ${machine}. No se registró otro inicio.`,true);return}if(prev&&!confirm(`En ${machine} está activa la partida ${prev.partida}. ¿Cerrar esa asignación e iniciar ${partida}?`))return;const timestamp=new Date().toISOString();if(prev){prev.end=timestamp;prev.endReason='Cambio de partida';prev.closeUser=user}records.unshift({id:id(),partida,machine,area:MACHINES.find(m=>m.name===machine).area,start:timestamp,end:null,user,endReason:'',closeUser:''});if(!persist())return;setMessage(`Registrado: partida ${partida} en ${machine} a las ${fmt(timestamp)}.`);$('code').value='';renderAll();}
+function finishPart(machine=$('machine').value){const prev=active(machine);if(!prev){setMessage('Esta máquina no tiene ninguna partida activa registrada.',true);return}const user=$('user').value.trim();if(!user){setMessage('Ingresa el encargado para finalizar la partida.',true);return}if(!confirm(`¿Finalizar partida ${prev.partida} en ${machine}?`))return;prev.end=new Date().toISOString();prev.endReason='Finalización manual';prev.closeUser=user;if(!persist())return;setMessage(`Partida ${prev.partida} finalizada en ${machine}.`);renderAll()}
+function renderMachines(){const area=$('machineArea').value,q=$('machineSearch').value.toLowerCase().trim(),list=MACHINES.filter(m=>(area==='Todas'||m.area===area)&&(!q||m.name.toLowerCase().includes(q)||(active(m.name)?.partida||'').toLowerCase().includes(q)));const a=list.filter(m=>active(m.name));$('statTotal').textContent=list.length;$('statActive').textContent=a.length;$('statEmpty').textContent=list.length-a.length;$('statParts').textContent=new Set(a.map(m=>active(m.name).partida)).size;const areas=['Mezclado','Peinado','Preparación'];$('machineSections').innerHTML=areas.map(area=>{const ms=list.filter(m=>m.area===area);if(!ms.length)return '';return `<section class="area-section"><div class="area-title"><h3>${esc(area)}</h3><span class="badge">${ms.length} equipos</span></div><div class="machine-grid">${ms.map(m=>{const r=active(m.name);return `<div class="machine ${r?'live':'empty'}"><div class="machine-head"><div class="machine-name">${esc(m.name)}</div><span class="status ${r?'ok':'stop'}">${r?'Partida registrada':'Sin registro'}</span></div><div class="machine-info">${r?`Partida: <strong>${esc(r.partida)}</strong><br>Inicio: ${esc(fmt(r.start))}<br>Tiempo: <strong>${duration(mins(r.start))}</strong>`:'No hay asignación activa registrada.'}</div><div class="machine-actions"><button class="btn btn-machine-register btn-sm" data-pick="${esc(m.name)}">${r?'Cambiar partida':'Registrar partida'}</button></div></div>`}).join('')}</div></section>`}).join('')||'<div class="empty-state">No se encontraron máquinas.</div>'}
+function filteredHistory(){const q=$('histSearch').value.trim().toLowerCase(),area=$('histArea').value,status=$('histState').value,date=$('histDate').value;return records.filter(r=>(!q||[r.partida,r.machine,r.user,r.closeUser].some(v=>String(v||'').toLowerCase().includes(q)))&&(area==='Todas'||r.area===area)&&(status==='all'||(status==='active'&&r.end===null)||(status==='closed'&&r.end!==null))&&(!date||new Date(r.start).toLocaleDateString('en-CA')===date)).sort((a,b)=>new Date(b.start)-new Date(a.start))}
+function renderHistory(){const arr=filteredHistory();$('histBody').innerHTML=arr.length?arr.map(r=>`<tr><td><b>${esc(r.partida)}</b></td><td>${esc(r.area)}</td><td>${esc(r.machine)}</td><td>${esc(fmt(r.start))}</td><td>${r.end?esc(fmt(r.end)):'—'}</td><td>${duration(mins(r.start,r.end||Date.now()))}</td><td><span class="state-pill ${r.end?'closed':'open'}">${r.end?'Cerrado':'Activo'}</span></td><td>${esc(r.user)}</td><td>${esc(r.endReason||'—')}</td></tr>`).join(''):'<tr><td colspan="9" class="empty-state">Sin registros para los filtros seleccionados.</td></tr>'}
+function renderAll(){refreshCurrent();renderMachines();renderHistory()}
+function download(name,data,mime){const blob=new Blob([data],{type:mime});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function exportCsv(){const fields=['Partida','Área','Máquina','Inicio','Fin','Duración (min)','Estado','Encargado','Motivo cierre','Encargado cierre'];const quote=v=>'"'+String(v??'').replace(/"/g,'""')+'"';const rows=filteredHistory().map(r=>[r.partida,r.area,r.machine,r.start,r.end||'',mins(r.start,r.end||Date.now()),r.end?'Cerrado':'Activo',r.user,r.endReason,r.closeUser]);download('trazabilidad_partidas_'+new Date().toISOString().slice(0,10)+'.csv','﻿'+[fields,...rows].map(row=>row.map(quote).join(';')).join('\r\n'),'text/csv;charset=utf-8')}
+async function stopScanner(){scanning=false;if(scanTimer){clearTimeout(scanTimer);scanTimer=null}if(scanner){try{await scanner.stop()}catch(e){}try{scanner.clear()}catch(e){}scanner=null}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('scannerBox').replaceChildren();$('scannerWrap').classList.remove('show');$('stopScanBtn').style.display='none';$('scanBtn').style.display='inline-flex';scanBusy=false}
+function onDecoded(value){if(!scanning||scanBusy)return;const v=String(value||'').trim();if(!v)return;scanBusy=true;$('code').value=v;$('scanStatus').textContent='Leído: '+v;stopScanner().then(()=>{setMessage('Código leído correctamente: '+v+'. Verifica la máquina y confirma el inicio.');$('code').focus()})}
+async function loadHtml5(){if(window.Html5Qrcode)return true;return new Promise(resolve=>{const script=document.createElement('script');script.src='https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';script.onload=()=>resolve(!!window.Html5Qrcode);script.onerror=()=>resolve(false);document.head.append(script)})}
+async function nativeScan(){if(!('BarcodeDetector'in window))throw Error('Sin lector nativo');let supported=await BarcodeDetector.getSupportedFormats();if(!supported.includes('code_39'))throw Error('Code 39 no soportado por este navegador');stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});const video=document.createElement('video');video.autoplay=true;video.muted=true;video.playsInline=true;video.srcObject=stream;$('scannerBox').append(video);await video.play();const detector=new BarcodeDetector({formats:['code_39']});$('scanStatus').textContent='Apunta al código de barras Code 39 de la hoja de ruta.';const loop=async()=>{if(!scanning||!stream)return;try{const codes=await detector.detect(video);if(codes.length){onDecoded(codes[0].rawValue);return}}catch(e){}scanTimer=setTimeout(loop,160)};loop()}
+async function fallbackScan(){if(!await loadHtml5())throw Error('No fue posible cargar el lector de respaldo. Comprueba tu conexión a internet.');scanner=new Html5Qrcode('scannerBox',{formatsToSupport:[Html5QrcodeSupportedFormats.CODE_39],verbose:false});await scanner.start({facingMode:'environment'},{fps:10,qrbox:{width:280,height:120}},decoded=>onDecoded(decoded),()=>{});$('scanStatus').textContent='Apunta al código de barras inferior de la hoja de ruta.'}
+async function startScanner(){if(scanning)return;if(!navigator.mediaDevices?.getUserMedia){setMessage('La cámara requiere abrir la aplicación mediante HTTPS o localhost. Mientras tanto puedes ingresar el número manualmente.',true);return}scanning=true;scanBusy=false;$('scannerWrap').classList.add('show');$('scanBtn').style.display='none';$('stopScanBtn').style.display='inline-flex';$('scanStatus').textContent='Solicitando acceso a la cámara…';try{await nativeScan()}catch(nativeError){if(!scanning)return;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('scannerBox').replaceChildren();try{await fallbackScan()}catch(e){await stopScanner();setMessage('No se pudo iniciar el lector: '+e.message+'. Puedes escribir el código manualmente.',true)}}}
+for(const s of ['area','machineArea','histArea'])$(s).innerHTML=areasOptions(s!=='area');$('area').value='Mezclado';$('machineArea').value='Todas';$('histArea').value='Todas';fillMachines();
+$('area').addEventListener('change',fillMachines);$('machine').addEventListener('change',refreshCurrent);$('startBtn').addEventListener('click',startPart);$('finishBtn').addEventListener('click',()=>finishPart());$('scanBtn').addEventListener('click',startScanner);$('stopScanBtn').addEventListener('click',stopScanner);$('machineArea').addEventListener('change',renderMachines);$('machineSearch').addEventListener('input',renderMachines);for(const id of ['histSearch','histArea','histState','histDate'])$(id).addEventListener(id==='histSearch'?'input':'change',renderHistory);$('clearFilters').addEventListener('click',()=>{$('histSearch').value='';$('histArea').value='Todas';$('histState').value='all';$('histDate').value='';renderHistory()});$('csvBtn').addEventListener('click',exportCsv);$('jsonBtn').addEventListener('click',()=>download('respaldo_trazabilidad_'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify({version:1,exportedAt:new Date().toISOString(),records},null,2),'application/json'));
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t===b));document.querySelectorAll('.content').forEach(t=>t.classList.toggle('active',t.id===b.dataset.tab));if(b.dataset.tab!=='register')stopScanner();renderAll()}));$('machineSections').addEventListener('click',e=>{const btn=e.target.closest('[data-pick]');if(!btn)return;const m=MACHINES.find(x=>x.name===btn.dataset.pick);if(!m)return;$('area').value=m.area;fillMachines();$('machine').value=m.name;document.querySelector('[data-tab="register"]').click();refreshCurrent();window.scrollTo({top:0,behavior:'smooth'})});window.addEventListener('pagehide',()=>stopScanner());renderAll();setInterval(renderAll,30000);
+</script></body></html>
